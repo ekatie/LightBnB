@@ -56,9 +56,9 @@ const addUser = function (user) {
 
   return pool
     .query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3);`, values)
-    .then((result) => {
-      console.log('result.rowCount: ', result.rowCount);
-      return result;
+    .then((newUser) => {
+      console.log(newUser.rowCount);
+      return newUser;
     })
     .catch((err) => {
       console.log(err.message);
@@ -105,8 +105,57 @@ const getAllReservations = function (guest_id, limit = 10) {
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = (options, limit = 10) => {
+  let query = `
+SELECT properties.*, AVG(property_reviews.rating) as average_rating 
+FROM properties
+JOIN property_reviews ON property_reviews.property_id = properties.id `;
+
+  // collect where conditional statements and values from user input
+  const conditions = [];
+  const values = [];
+
+  // push conditional statements and user input values to arrays
+  if (options.city) {
+    values.push(`%${options.city}%`);
+    conditions.push(`city LIKE $${values.length}`);
+  }
+
+  if (options.minimum_price_per_night) {
+    values.push(options.minimum_price_per_night * 100);
+    conditions.push(`properties.cost_per_night > $${values.length}`);
+  }
+
+  if (options.maximum_price_per_night) {
+    values.push(options.maximum_price_per_night * 100);
+    conditions.push(`properties.cost_per_night < $${values.length}`);
+  }
+
+  if (options.owner_id) {
+    values.push(`%${options.city}%`);
+    conditions.push(`owner_id = $${values.length}`);
+  }
+
+  // check if any where conditions exist, join and add to query
+  if (conditions.length > 0) {
+    query += `WHERE ${conditions.join(' AND ')}`;
+  }
+
+  query += `GROUP BY properties.id `;
+
+  // check for rating filter, add to query 
+  if (options.minimum_rating) {
+    values.push(`${options.minimum_rating}`);
+    query += `HAVING AVG(property_reviews.rating) >= $${values.length} `;
+  }
+
+  // add limit to query
+  values.push(limit);
+  query += `
+  ORDER BY properties.cost_per_night
+  LIMIT $${values.length};`;
+
   return pool
-    .query(`SELECT * FROM properties LIMIT $1`, [limit])
+    .query(query, values)
     .then((result) => {
       return result.rows;
     })
