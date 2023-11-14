@@ -12,11 +12,10 @@ const { pool } = require('./index');
 const getUserWithEmail = function (email) {
   return pool
     .query(`SELECT * FROM users WHERE email = $1`, [email])
-    .then((result) => {
-      return result.rows[0] || null;
+    .then((user) => {
+      return user.rows[0] || null;
     })
     .catch((err) => {
-      console.log(err);
       return Promise.reject(err);
     });
 };
@@ -29,11 +28,10 @@ const getUserWithEmail = function (email) {
 const getUserWithId = function (id) {
   return pool
     .query(`SELECT * FROM users WHERE id = $1`, [id])
-    .then((result) => {
-      return result.rows[0] || null;
+    .then((user) => {
+      return user.rows[0] || null;
     })
     .catch((err) => {
-      console.log(err.message);
       return Promise.reject(err);
     });
 };
@@ -49,11 +47,9 @@ const addUser = function (user) {
   return pool
     .query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *;`, values)
     .then((newUser) => {
-      console.log(newUser.rowCount);
       return newUser;
     })
     .catch((err) => {
-      console.log(err.message);
       return Promise.reject(err);
     });
 };
@@ -83,7 +79,6 @@ const getAllReservations = function (guest_id, limit = 10) {
       return result.rows;
     })
     .catch((err) => {
-      console.log(err.message);
       return Promise.reject(err);
     });
 };
@@ -97,6 +92,7 @@ const getAllReservations = function (guest_id, limit = 10) {
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = (options, limit = 10) => {
+
   let query = `
 SELECT properties.*, AVG(property_reviews.rating) as average_rating 
 FROM properties
@@ -152,7 +148,6 @@ JOIN property_reviews ON property_reviews.property_id = properties.id `;
       return result.rows;
     })
     .catch((err) => {
-      console.log(err.message);
       return Promise.reject(err);
     });
 };
@@ -163,20 +158,17 @@ JOIN property_reviews ON property_reviews.property_id = properties.id `;
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function (property) {
+
   const values = [property.owner_id, property.title, property.description, property.thumbnail_photo_url, property.cover_photo_url, property.cost_per_night, property.street, property.city, property.province, property.post_code, property.country, property.parking_spaces, property.number_of_bathrooms, property.number_of_bedrooms];
 
   return pool
     .query(`INSERT INTO properties (owner_id, title, description, thumbnail_photo_url, cover_photo_url, cost_per_night, street, city, province, post_code, country, parking_spaces, number_of_bathrooms, number_of_bedrooms) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *;`, values)
     .then((newProperty) => {
-      console.log(newProperty.rowCount);
       return newProperty;
     })
     .catch((err) => {
-      console.log(err.message);
       return Promise.reject(err);
     });
-
-
 };
 
 module.exports = {
