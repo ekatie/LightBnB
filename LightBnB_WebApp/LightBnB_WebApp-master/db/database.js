@@ -51,11 +51,10 @@ const getUserWithId = function (id) {
  * @return {Promise<{}>} A promise to the user.
  */
 const addUser = function (user) {
-  console.log('user: ', user);
   const values = [user.name, user.email, user.password];
 
   return pool
-    .query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3);`, values)
+    .query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *;`, values)
     .then((newUser) => {
       console.log(newUser.rowCount);
       return newUser;
@@ -131,7 +130,7 @@ JOIN property_reviews ON property_reviews.property_id = properties.id `;
   }
 
   if (options.owner_id) {
-    values.push(`%${options.city}%`);
+    values.push(`${options.owner_id}`);
     conditions.push(`owner_id = $${values.length}`);
   }
 
@@ -171,10 +170,20 @@ JOIN property_reviews ON property_reviews.property_id = properties.id `;
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function (property) {
-  const propertyId = Object.keys(properties).length + 1;
-  property.id = propertyId;
-  properties[propertyId] = property;
-  return Promise.resolve(property);
+  const values = [property.owner_id, property.title, property.description, property.thumbnail_photo_url, property.cover_photo_url, property.cost_per_night, property.street, property.city, property.province, property.post_code, property.country, property.parking_spaces, property.number_of_bathrooms, property.number_of_bedrooms];
+
+  return pool
+    .query(`INSERT INTO properties (owner_id, title, description, thumbnail_photo_url, cover_photo_url, cost_per_night, street, city, province, post_code, country, parking_spaces, number_of_bathrooms, number_of_bedrooms) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *;`, values)
+    .then((newProperty) => {
+      console.log(newProperty.rowCount);
+      return newProperty;
+    })
+    .catch((err) => {
+      console.log(err.message);
+      return Promise.reject(err);
+    });
+
+
 };
 
 module.exports = {
