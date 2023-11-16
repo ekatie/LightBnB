@@ -96,7 +96,7 @@ const getAllProperties = (options, limit = 10) => {
   let query = `
 SELECT properties.*, AVG(property_reviews.rating) as average_rating 
 FROM properties
-JOIN property_reviews ON property_reviews.property_id = properties.id `;
+JOIN property_reviews ON property_id = properties.id `;
 
   // collect where conditional statements and values from user input
   const sqlConditions = [];
@@ -110,12 +110,12 @@ JOIN property_reviews ON property_reviews.property_id = properties.id `;
 
   if (options.minimum_price_per_night) {
     values.push(options.minimum_price_per_night * 100);
-    sqlConditions.push(`properties.cost_per_night > $${values.length}`);
+    sqlConditions.push(`cost_per_night > $${values.length}`);
   }
 
   if (options.maximum_price_per_night) {
     values.push(options.maximum_price_per_night * 100);
-    sqlConditions.push(`properties.cost_per_night < $${values.length}`);
+    sqlConditions.push(`cost_per_night < $${values.length}`);
   }
 
   if (options.owner_id) {
@@ -131,13 +131,13 @@ JOIN property_reviews ON property_reviews.property_id = properties.id `;
   // check for rating filter, add to query 
   if (options.minimum_rating) {
     values.push(`${options.minimum_rating}`);
-    query += `HAVING AVG(property_reviews.rating) >= $${values.length} `;
+    query += `HAVING AVG(rating) >= $${values.length} `;
   }
 
   // add limit to query
   values.push(limit);
   query += `
-  ORDER BY properties.cost_per_night
+  ORDER BY cost_per_night
   LIMIT $${values.length};`;
 
   return pool
