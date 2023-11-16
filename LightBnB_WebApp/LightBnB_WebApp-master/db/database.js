@@ -99,34 +99,32 @@ FROM properties
 JOIN property_reviews ON property_reviews.property_id = properties.id `;
 
   // collect where conditional statements and values from user input
-  const conditions = [];
+  const sqlConditions = [];
   const values = [];
 
   // push conditional statements and user input values to arrays
   if (options.city) {
     values.push(`%${options.city}%`);
-    conditions.push(`city LIKE $${values.length}`);
+    sqlConditions.push(`city LIKE $${values.length}`);
   }
 
   if (options.minimum_price_per_night) {
     values.push(options.minimum_price_per_night * 100);
-    conditions.push(`properties.cost_per_night > $${values.length}`);
+    sqlConditions.push(`properties.cost_per_night > $${values.length}`);
   }
 
   if (options.maximum_price_per_night) {
     values.push(options.maximum_price_per_night * 100);
-    conditions.push(`properties.cost_per_night < $${values.length}`);
+    sqlConditions.push(`properties.cost_per_night < $${values.length}`);
   }
 
   if (options.owner_id) {
     values.push(`${options.owner_id}`);
-    conditions.push(`owner_id = $${values.length}`);
+    sqlConditions.push(`owner_id = $${values.length}`);
   }
 
   // check if any where conditions exist, join and add to query
-  if (conditions.length > 0) {
-    query += `WHERE ${conditions.join(' AND ')}`;
-  }
+  query += sqlConditions.length > 0 ? `WHERE ${sqlConditions.join(' AND ')}` : '';
 
   query += `GROUP BY properties.id `;
 
