@@ -99,49 +99,49 @@ FROM properties
 JOIN property_reviews ON property_id = properties.id `;
 
   // collect where conditional statements and values from user input
-  const sqlConditions = [];
-  const values = [];
+  const whereConditions = [];
+  const userFilters = [];
 
   // push conditional statements and user input values to arrays
   if (options.city) {
-    values.push(`%${options.city}%`);
-    sqlConditions.push(`city LIKE $${values.length}`);
+    userFilters.push(`%${options.city}%`);
+    whereConditions.push(`city LIKE $${userFilters.length}`);
   }
 
   if (options.minimum_price_per_night) {
-    values.push(options.minimum_price_per_night * 100);
-    sqlConditions.push(`cost_per_night > $${values.length}`);
+    userFilters.push(options.minimum_price_per_night * 100);
+    whereConditions.push(`cost_per_night > $${userFilters.length}`);
   }
 
   if (options.maximum_price_per_night) {
-    values.push(options.maximum_price_per_night * 100);
-    sqlConditions.push(`cost_per_night < $${values.length}`);
+    userFilters.push(options.maximum_price_per_night * 100);
+    whereConditions.push(`cost_per_night < $${userFilters.length}`);
   }
 
   if (options.owner_id) {
-    values.push(`${options.owner_id}`);
-    sqlConditions.push(`owner_id = $${values.length}`);
+    userFilters.push(`${options.owner_id}`);
+    whereConditions.push(`owner_id = $${userFilters.length}`);
   }
 
   // check if any where conditions exist, join and add to query
-  query += sqlConditions.length > 0 ? `WHERE ${sqlConditions.join(' AND ')}` : '';
+  query += whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
   query += `GROUP BY properties.id `;
 
   // check for rating filter, add to query 
   if (options.minimum_rating) {
-    values.push(`${options.minimum_rating}`);
-    query += `HAVING AVG(rating) >= $${values.length} `;
+    userFilters.push(`${options.minimum_rating}`);
+    query += `HAVING AVG(rating) >= $${userFilters.length} `;
   }
 
   // add limit to query
-  values.push(limit);
+  userFilters.push(limit);
   query += `
   ORDER BY cost_per_night
-  LIMIT $${values.length};`;
+  LIMIT $${userFilters.length};`;
 
   return pool
-    .query(query, values)
+    .query(query, userFilters)
     .then((result) => {
       return result.rows;
     })
